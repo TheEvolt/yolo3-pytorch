@@ -373,7 +373,5 @@ class YOLO(object):
                     str(int(bottom)),
                 )
             )
-
         f.close()
         return
-

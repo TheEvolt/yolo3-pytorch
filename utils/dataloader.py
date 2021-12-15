@@ -157,5 +157,3 @@ def yolo_dataset_collate(batch):
         bboxes.append(box)
     images = np.array(images)
     return images, bboxes
-
-

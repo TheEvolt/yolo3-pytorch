@@ -1,5 +1,5 @@
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageDraw
 
 #---------------------------------------------------------#
 #   将图像转换成RGB图像，防止灰度图在预测时报错。
@@ -7,11 +7,11 @@ from PIL import Image
 #---------------------------------------------------------#
 def cvtColor(image):
     if len(np.shape(image)) == 3 and np.shape(image)[2] == 3:
-        return image 
+        return image
     else:
         image = image.convert('RGB')
-        return image 
-    
+        return image
+
 #---------------------------------------------------#
 #   对输入图像进行resize
 #---------------------------------------------------#
