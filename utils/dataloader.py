@@ -9,8 +9,8 @@ from utils.utils import cvtColor, preprocess_input
 class YoloDataset(Dataset):
     def __init__(self, annotation_lines, input_shape, num_classes, train):
         super(YoloDataset, self).__init__()
-        self.annotation_lines   = annotation_lines
-        self.input_shape        = input_shape
+        self.annotation_lines   = annotation_lines  # ['path box1 box2 box3 ...', 'path box1 box2 box3 ...', 'path box1 box2 box3 ...', ...]
+        self.input_shape        = input_shape  # 416*416，32的倍数
         self.num_classes        = num_classes
         self.length             = len(self.annotation_lines)
         self.train              = train
@@ -18,6 +18,7 @@ class YoloDataset(Dataset):
     def __len__(self):
         return self.length
 
+    # note:取出数据并随机增强, 转换为xywh格式
     def __getitem__(self, index):
         index       = index % self.length
         #---------------------------------------------------#
@@ -27,6 +28,7 @@ class YoloDataset(Dataset):
         image, box  = self.get_random_data(self.annotation_lines[index], self.input_shape[0:2], random = self.train)
         image       = np.transpose(preprocess_input(np.array(image, dtype=np.float32)), (2, 0, 1))
         box         = np.array(box, dtype=np.float32)
+        # 归一化真实框宽高
         if len(box) != 0:
             box[:, [0, 2]] = box[:, [0, 2]] / self.input_shape[1]
             box[:, [1, 3]] = box[:, [1, 3]] / self.input_shape[0]
@@ -39,7 +41,7 @@ class YoloDataset(Dataset):
         return np.random.rand()*(b-a) + a
 
     def get_random_data(self, annotation_line, input_shape, jitter=.3, hue=.1, sat=1.5, val=1.5, random=True):
-        line    = annotation_line.split()
+        line    = annotation_line.split()  # ['path', 'box1', 'box2', 'box3', ...]
         #------------------------------#
         #   读取图像并转换成RGB图像
         #------------------------------#
@@ -51,30 +53,36 @@ class YoloDataset(Dataset):
         iw, ih  = image.size
         h, w    = input_shape
         #------------------------------#
-        #   获得预测框
+        #   获得一张图片上的多个物体真实框，[[x1_left, y1_upper, x1_right, y1_bottom], [x2_left, y2_upper, x2_right, y2_bottom], ...]
         #------------------------------#
         box     = np.array([np.array(list(map(int,box.split(',')))) for box in line[1:]])
 
         if not random:
+            # 以较长边为基准(列如416*512, 512缩放因子最小)，相同高宽比缩放到416，不足部分以灰条填充
             scale = min(w/iw, h/ih)
             nw = int(iw*scale)
             nh = int(ih*scale)
+            # 缩放图片在背景图中居中
             dx = (w-nw)//2
             dy = (h-nh)//2
 
+            #(w,h)是网络规定尺寸416*416，(iw,ih)是原图片尺寸，(nw,nh)是缩放图片尺寸
             #---------------------------------#
             #   将图像多余的部分加上灰条
             #---------------------------------#
             image       = image.resize((nw,nh), Image.BICUBIC)
+            # 缩放图片与背景图合成新图片，使得缩放图片不足部分进行复制填充
             new_image   = Image.new('RGB', (w,h), (128,128,128))
             new_image.paste(image, (dx, dy))
-            image_data  = np.array(new_image, np.float32)
+            image_data  = np.array(new_image, np.float32)  # array不会导致长度翻倍
 
             #---------------------------------#
             #   对真实框进行调整
             #---------------------------------#
             if len(box)>0:
-                np.random.shuffle(box)
+                # note:图像尺寸变化，box也必须随之变化
+                np.random.shuffle(box)  # 打乱一张图片上的真实框
+                # 图片锚点在左上角，box也向左上缩放，缩放图片在背景图中平移dx,dy，box也平移dx,dy
                 box[:, [0,2]] = box[:, [0,2]]*nw/iw + dx
                 box[:, [1,3]] = box[:, [1,3]]*nh/ih + dy
                 box[:, 0:2][box[:, 0:2]<0] = 0
@@ -85,7 +93,7 @@ class YoloDataset(Dataset):
                 box = box[np.logical_and(box_w>1, box_h>1)] # discard invalid box
 
             return image_data, box
-                
+
         #------------------------------------------#
         #   对图像进行缩放并且进行长和宽的扭曲
         #------------------------------------------#
@@ -144,11 +152,11 @@ class YoloDataset(Dataset):
             box[:, 3][box[:, 3]>h] = h
             box_w = box[:, 2] - box[:, 0]
             box_h = box[:, 3] - box[:, 1]
-            box = box[np.logical_and(box_w>1, box_h>1)] 
-        
+            box = box[np.logical_and(box_w>1, box_h>1)]
+
         return image_data, box
-    
-# DataLoader中collate_fn使用
+
+# DataLoader中collate_fn参数
 def yolo_dataset_collate(batch):
     images = []
     bboxes = []

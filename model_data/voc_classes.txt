@@ -18,3 +18,5 @@ sheep
 sofa
 train
 tvmonitor
+pole
+rock

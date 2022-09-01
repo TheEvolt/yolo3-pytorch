@@ -153,6 +153,7 @@ class DecodeBox:
                 ),
                 -1,
             )
+            # batch_size, 3*13*13, 5+num_classes
             outputs.append(output.data)
         return outputs
 
@@ -174,7 +175,8 @@ class DecodeBox:
             # -----------------------------------------------------------------#
             new_shape = np.round(image_shape * np.min(input_shape / image_shape))
             offset = (input_shape - new_shape) / 2.0 / input_shape
-            scale = input_shape / new_shape
+            # scale = input_shape / new_shape 有错误
+            scale = image_shape / new_shape
 
             box_yx = (box_yx - offset) * scale
             box_hw *= scale
@@ -205,7 +207,7 @@ class DecodeBox:
     ):
         # ----------------------------------------------------------#
         #   将预测结果的格式转换成左上角右下角的格式。
-        #   prediction  [batch_size, num_anchors, 85]
+        #   prediction  [batch_size, 3*13*13+3*26*26+3*52*52, 5+num_classes]
         # ----------------------------------------------------------#
         box_corner = prediction.new(prediction.shape)
         box_corner[:, :, 0] = prediction[:, :, 0] - prediction[:, :, 2] / 2
@@ -215,12 +217,14 @@ class DecodeBox:
         prediction[:, :, :4] = box_corner[:, :, :4]
 
         output = [None for _ in range(len(prediction))]
+        # image_pred[3*13*13+3*26*26+3*52*52, 5+num_classes]
         for i, image_pred in enumerate(prediction):
             # ----------------------------------------------------------#
             #   对种类预测部分取max。
             #   class_conf  [num_anchors, 1]    种类置信度
             #   class_pred  [num_anchors, 1]    种类
             # ----------------------------------------------------------#
+            # class_conf[3*13*13, 1]
             class_conf, class_pred = torch.max(
                 image_pred[:, 5 : 5 + num_classes], 1, keepdim=True
             )

@@ -1,0 +1,26 @@
+<annotation>
+	<folder>DJI_0619</folder>
+	<filename>DJI_0619_081.JPG</filename>
+	<path>D:\WorkSpace\MyYOLO\data\Image\DJI_0619\DJI_0619_081.JPG</path>
+	<source>
+		<database>Unknown</database>
+	</source>
+	<size>
+		<width>544</width>
+		<height>544</height>
+		<depth>3</depth>
+	</size>
+	<segmented>0</segmented>
+	<object>
+		<name>rock</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>388</xmin>
+			<ymin>35</ymin>
+			<xmax>439</xmax>
+			<ymax>66</ymax>
+		</bndbox>
+	</object>
+</annotation>

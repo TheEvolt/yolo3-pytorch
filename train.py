@@ -151,8 +151,8 @@ if __name__ == "__main__":
     # ---------------------------#
     #   读取数据集对应的txt
     # ---------------------------#
-    with open(train_annotation_path) as f:
-        train_lines = f.readlines()
+    with open(train_annotation_path) as f:  # 2007_train.txt
+        train_lines = f.readlines()  # ['path box1 box2 box3 ...', 'path box1 box2 box3 ...', 'path box1 box2 box3 ...', ...]
     with open(val_annotation_path) as f:
         val_lines = f.readlines()
     num_train = len(train_lines)

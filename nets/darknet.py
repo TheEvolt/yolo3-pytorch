@@ -15,7 +15,7 @@ class BasicBlock(nn.Module):
         self.conv1  = nn.Conv2d(inplanes, planes[0], kernel_size=1, stride=1, padding=0, bias=False)
         self.bn1    = nn.BatchNorm2d(planes[0])
         self.relu1  = nn.LeakyReLU(0.1)
-        
+
         self.conv2  = nn.Conv2d(planes[0], planes[1], kernel_size=3, stride=1, padding=1, bias=False)
         self.bn2    = nn.BatchNorm2d(planes[1])
         self.relu2  = nn.LeakyReLU(0.1)
@@ -43,6 +43,7 @@ class DarkNet(nn.Module):
         self.bn1    = nn.BatchNorm2d(self.inplanes)
         self.relu1  = nn.LeakyReLU(0.1)
 
+        # layers[1, 2, 8, 8, 4]
         # 416,416,32 -> 208,208,64
         self.layer1 = self._make_layer([32, 64], layers[0])
         # 208,208,64 -> 104,104,128
